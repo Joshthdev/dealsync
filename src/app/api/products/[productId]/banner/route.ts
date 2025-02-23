@@ -11,32 +11,35 @@ export const runtime = "edge"
 
 export async function GET(
   request: NextRequest,
-  { params: { productId } }: { params: { productId: string } }
+  context: { params: { productId: string } }
 ) {
-  const headersMap = await headers()
-  const requestingUrl = headersMap.get("referer") || headersMap.get("origin")
-  if (requestingUrl == null) return notFound()
-  const countryCode = getCountryCode(request)
-  if (countryCode == null) return notFound()
+  const { productId } = context.params; // Extract productId properly
+
+  const headersMap = await headers();
+  const requestingUrl = headersMap.get("referer") || headersMap.get("origin");
+  if (requestingUrl == null) return notFound();
+
+  const countryCode = getCountryCode(request);
+  if (countryCode == null) return notFound();
 
   const { product, discount, country } = await getProductForBanner({
     id: productId,
     countryCode,
     url: requestingUrl,
-  })
+  });
 
-  if (product == null) return notFound()
+  if (product == null) return notFound();
 
-  const canShowBanner = await canShowDiscountBanner(product.clerkUserId)
+  const canShowBanner = await canShowDiscountBanner(product.clerkUserId);
 
   await createProductView({
     productId: product.id,
     countryId: country?.id,
     userId: product.clerkUserId,
-  })
+  });
 
-  if (!canShowBanner) return notFound()
-  if (country == null || discount == null) return notFound()
+  if (!canShowBanner) return notFound();
+  if (country == null || discount == null) return notFound();
 
   return new Response(
     await getJavaScript(
@@ -46,7 +49,7 @@ export async function GET(
       await canRemoveBranding(product.clerkUserId)
     ),
     { headers: { "content-type": "text/javascript" } }
-  )
+  );
 }
 function getCountryCode(request: NextRequest) {
   if ((request as any).geo?.country != null) return (request as any).geo.country

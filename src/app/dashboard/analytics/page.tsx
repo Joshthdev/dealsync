@@ -27,21 +27,24 @@ import { TimezoneDropdownMenuItem } from "../_components/TimezoneDropdownMenuIte
 export default async function AnalyticsPage({
 	searchParams,
 }: {
-	searchParams: Record<string, string | undefined>;
+	searchParams?: { [key: string]: string | undefined };
 }) {
+	// ✅ Ensure `searchParams` is always an object (avoid undefined errors)
+	const queryParams = searchParams ?? {};
+
 	// ✅ Remove `undefined` values before passing `searchParams` to functions
 	const sanitizedSearchParams = Object.fromEntries(
-		Object.entries(searchParams).filter(([_, value]) => value !== undefined)
+		Object.entries(queryParams).filter(([_, value]) => value !== undefined)
 	) as Record<string, string>;
 
 	const { userId, redirectToSignIn } = await auth();
 	if (userId == null) return redirectToSignIn();
 
 	const interval =
-		CHART_INTERVALS[searchParams.interval as keyof typeof CHART_INTERVALS] ??
+		CHART_INTERVALS[queryParams.interval as keyof typeof CHART_INTERVALS] ??
 		CHART_INTERVALS.last7Days;
-	const timezone = searchParams.timezone || "UTC";
-	const productId = searchParams.productId;
+	const timezone = queryParams.timezone || "UTC";
+	const productId = queryParams.productId;
 
 	return (
 		<>

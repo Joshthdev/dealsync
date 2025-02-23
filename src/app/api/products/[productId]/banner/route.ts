@@ -11,7 +11,7 @@ export const runtime = "edge";
 
 export async function GET(
   request: NextRequest,
-  context: { params: Record<string, string> } // ✅ Use Record<string, string> to satisfy Next.js type constraints
+  context: { params: { productId: string } }
 ) {
   const { productId } = context.params;
 

@@ -1,7 +1,5 @@
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
-import { Button } from "@/components/ui/button";
-import { UserIcon } from "lucide-react";
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 
 export default function NavBar() {

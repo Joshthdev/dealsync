@@ -38,6 +38,8 @@ export const ProductTable = pgTable(
   })
 )
 
+export type Product = typeof ProductTable.$inferSelect;
+
 export const productRelations = relations(ProductTable, ({ one, many }) => ({
   productCustomization: one(ProductCustomizationTable),
   productViews: many(ProductViewTable),

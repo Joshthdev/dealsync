@@ -1,7 +1,10 @@
 import { Banner } from "@/components/Banner";
+import { db } from "@/drizzle/db";
+import { ProductTable } from "@/drizzle/schema";
 import { getProductForBanner } from "@/server/db/products";
 import { createProductView } from "@/server/db/productViews";
 import { canRemoveBranding, canShowDiscountBanner } from "@/server/permissions";
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { NextRequest } from "next/server";
@@ -9,11 +12,18 @@ import { createElement } from "react";
 
 export const runtime = "edge";
 
-export async function GET(
-  request: NextRequest,
-  context: { params: { productId: string } }
-) {
-  const { productId } = context.params;
+export async function GET(request: NextRequest) {
+  // ✅ Extract product ID from URL
+  const productId = request.nextUrl.pathname.split("/").pop();
+  if (!productId) return notFound();
+  // ✅ Fetch product from database
+  const productFromDb = await db
+    .select()
+    .from(ProductTable)
+    .where(eq(ProductTable.id, productId))
+    .limit(1);
+
+  if (!productFromDb.length) return notFound(); // Product not found
 
   const headersMap = await headers();
   const requestingUrl = headersMap.get("referer") || headersMap.get("origin");

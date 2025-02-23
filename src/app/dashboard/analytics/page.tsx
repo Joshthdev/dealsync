@@ -27,20 +27,24 @@ import { TimezoneDropdownMenuItem } from "../_components/TimezoneDropdownMenuIte
 export default async function AnalyticsPage({
 	searchParams,
 }: {
-	searchParams: {
-		interval?: string;
-		timezone?: string;
-		productId?: string;
-	};
+	searchParams?: Record<string, string | undefined>;
 }) {
+	// ✅ Ensure `searchParams` is always an object (avoid undefined errors)
+	const queryParams = searchParams ?? {};
+
+	// ✅ Remove `undefined` values before passing `searchParams` to functions
+	const sanitizedSearchParams = Object.fromEntries(
+		Object.entries(queryParams).filter(([_, value]) => value !== undefined)
+	) as Record<string, string>;
+
 	const { userId, redirectToSignIn } = await auth();
 	if (userId == null) return redirectToSignIn();
 
 	const interval =
-		CHART_INTERVALS[searchParams.interval as keyof typeof CHART_INTERVALS] ??
+		CHART_INTERVALS[queryParams.interval as keyof typeof CHART_INTERVALS] ??
 		CHART_INTERVALS.last7Days;
-	const timezone = searchParams.timezone || "UTC";
-	const productId = searchParams.productId;
+	const timezone = queryParams.timezone || "UTC";
+	const productId = queryParams.productId;
 
 	return (
 		<>
@@ -59,9 +63,13 @@ export default async function AnalyticsPage({
 								{Object.entries(CHART_INTERVALS).map(([key, value]) => (
 									<DropdownMenuItem asChild key={key}>
 										<Link
-											href={createURL("/dashboard/analytics", searchParams, {
-												interval: key,
-											})}
+											href={createURL(
+												"/dashboard/analytics",
+												sanitizedSearchParams,
+												{
+													interval: key,
+												}
+											)}
 										>
 											{value.label}
 										</Link>
@@ -72,7 +80,7 @@ export default async function AnalyticsPage({
 						<ProductDropdown
 							userId={userId}
 							selectedProductId={productId}
-							searchParams={searchParams}
+							searchParams={sanitizedSearchParams} // ✅ Use sanitized search params
 						/>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
@@ -84,14 +92,20 @@ export default async function AnalyticsPage({
 							<DropdownMenuContent>
 								<DropdownMenuItem asChild>
 									<Link
-										href={createURL("/dashboard/analytics", searchParams, {
-											timezone: "UTC",
-										})}
+										href={createURL(
+											"/dashboard/analytics",
+											sanitizedSearchParams,
+											{
+												timezone: "UTC",
+											}
+										)}
 									>
 										UTC
 									</Link>
 								</DropdownMenuItem>
-								<TimezoneDropdownMenuItem searchParams={searchParams} />
+								<TimezoneDropdownMenuItem
+									searchParams={sanitizedSearchParams}
+								/>
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>

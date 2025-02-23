@@ -1,26 +1,26 @@
-import { Banner } from "@/components/Banner"
-import { getProductForBanner } from "@/server/db/products"
-import { createProductView } from "@/server/db/productViews"
-import { canRemoveBranding, canShowDiscountBanner } from "@/server/permissions"
-import { headers } from "next/headers"
-import { notFound } from "next/navigation"
-import { NextRequest } from "next/server"
-import { createElement } from "react"
+import { Banner } from "@/components/Banner";
+import { getProductForBanner } from "@/server/db/products";
+import { createProductView } from "@/server/db/productViews";
+import { canRemoveBranding, canShowDiscountBanner } from "@/server/permissions";
+import { headers } from "next/headers";
+import { notFound } from "next/navigation";
+import { NextRequest } from "next/server";
+import { createElement } from "react";
 
-export const runtime = "edge"
+export const runtime = "edge";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { productId: string } }
+  context: { params: Record<string, string> } // ✅ Use Record<string, string> to satisfy Next.js type constraints
 ) {
-  const { productId } = context.params; // Extract productId properly
+  const { productId } = context.params;
 
   const headersMap = await headers();
   const requestingUrl = headersMap.get("referer") || headersMap.get("origin");
-  if (requestingUrl == null) return notFound();
+  if (!requestingUrl) return notFound();
 
   const countryCode = getCountryCode(request);
-  if (countryCode == null) return notFound();
+  if (!countryCode) return notFound();
 
   const { product, discount, country } = await getProductForBanner({
     id: productId,
@@ -28,7 +28,7 @@ export async function GET(
     url: requestingUrl,
   });
 
-  if (product == null) return notFound();
+  if (!product) return notFound();
 
   const canShowBanner = await canShowDiscountBanner(product.clerkUserId);
 
@@ -38,8 +38,7 @@ export async function GET(
     userId: product.clerkUserId,
   });
 
-  if (!canShowBanner) return notFound();
-  if (country == null || discount == null) return notFound();
+  if (!canShowBanner || !country || !discount) return notFound();
 
   return new Response(
     await getJavaScript(
@@ -51,31 +50,32 @@ export async function GET(
     { headers: { "content-type": "text/javascript" } }
   );
 }
+
 function getCountryCode(request: NextRequest) {
-  if ((request as any).geo?.country != null) return (request as any).geo.country
+  if ((request as any).geo?.country) return (request as any).geo.country;
   if (process.env.NODE_ENV === "development") {
-    return process.env.TEST_COUNTRY_CODE
+    return process.env.TEST_COUNTRY_CODE;
   }
-  return null
+  return null;
 }
 
 async function getJavaScript(
   product: {
     customization: {
-      locationMessage: string
-      bannerContainer: string
-      backgroundColor: string
-      textColor: string
-      fontSize: string
-      isSticky: boolean
-      classPrefix?: string | null
-    }
+      locationMessage: string;
+      bannerContainer: string;
+      backgroundColor: string;
+      textColor: string;
+      fontSize: string;
+      isSticky: boolean;
+      classPrefix?: string | null;
+    };
   },
   country: { name: string },
   discount: { coupon: string; percentage: number },
   canRemoveBranding: boolean
 ) {
-  const { renderToStaticMarkup } = await import("react-dom/server")
+  const { renderToStaticMarkup } = await import("react-dom/server");
   return `
     const banner = document.createElement("div");
     banner.innerHTML = '${renderToStaticMarkup(
@@ -93,5 +93,5 @@ async function getJavaScript(
     document.querySelector("${
       product.customization.bannerContainer
     }").prepend(...banner.children);
-  `.replace(/(\r\n|\n|\r)/g, "")
+  `.replace(/(\r\n|\n|\r)/g, "");
 }

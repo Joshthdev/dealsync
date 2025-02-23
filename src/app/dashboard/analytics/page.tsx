@@ -27,12 +27,13 @@ import { TimezoneDropdownMenuItem } from "../_components/TimezoneDropdownMenuIte
 export default async function AnalyticsPage({
 	searchParams,
 }: {
-	searchParams: {
-		interval?: string;
-		timezone?: string;
-		productId?: string;
-	};
+	searchParams: Record<string, string | undefined>;
 }) {
+	// ✅ Remove `undefined` values before passing `searchParams` to functions
+	const sanitizedSearchParams = Object.fromEntries(
+		Object.entries(searchParams).filter(([_, value]) => value !== undefined)
+	) as Record<string, string>;
+
 	const { userId, redirectToSignIn } = await auth();
 	if (userId == null) return redirectToSignIn();
 
@@ -59,9 +60,13 @@ export default async function AnalyticsPage({
 								{Object.entries(CHART_INTERVALS).map(([key, value]) => (
 									<DropdownMenuItem asChild key={key}>
 										<Link
-											href={createURL("/dashboard/analytics", searchParams, {
-												interval: key,
-											})}
+											href={createURL(
+												"/dashboard/analytics",
+												sanitizedSearchParams,
+												{
+													interval: key,
+												}
+											)}
 										>
 											{value.label}
 										</Link>
@@ -72,7 +77,7 @@ export default async function AnalyticsPage({
 						<ProductDropdown
 							userId={userId}
 							selectedProductId={productId}
-							searchParams={searchParams}
+							searchParams={sanitizedSearchParams} // ✅ Use sanitized search params
 						/>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
@@ -84,14 +89,20 @@ export default async function AnalyticsPage({
 							<DropdownMenuContent>
 								<DropdownMenuItem asChild>
 									<Link
-										href={createURL("/dashboard/analytics", searchParams, {
-											timezone: "UTC",
-										})}
+										href={createURL(
+											"/dashboard/analytics",
+											sanitizedSearchParams,
+											{
+												timezone: "UTC",
+											}
+										)}
 									>
 										UTC
 									</Link>
 								</DropdownMenuItem>
-								<TimezoneDropdownMenuItem searchParams={searchParams} />
+								<TimezoneDropdownMenuItem
+									searchParams={sanitizedSearchParams}
+								/>
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>

@@ -51,12 +51,10 @@ export async function GET(
   );
 }
 
-function getCountryCode(request: NextRequest) {
-  if ((request as any).geo?.country) return (request as any).geo.country;
-  if (process.env.NODE_ENV === "development") {
-    return process.env.TEST_COUNTRY_CODE;
-  }
-  return null;
+// ✅ FIXED getCountryCode function to avoid `any`
+function getCountryCode(request: NextRequest): string | null {
+  const geo = (request as NextRequest & { geo?: { country?: string } }).geo;
+  return geo?.country ?? (process.env.NODE_ENV === "development" ? process.env.TEST_COUNTRY_CODE ?? null : null);
 }
 
 async function getJavaScript(

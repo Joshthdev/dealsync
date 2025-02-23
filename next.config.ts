@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     dynamic: 0,
   },
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
 };
 

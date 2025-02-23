@@ -11,9 +11,9 @@ export const runtime = "edge";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { productId: string } } // ✅ Correct Type
+  context: { params: { productId: string } }
 ) {
-  const { productId } = context.params; // ✅ Extract correctly
+  const { productId } = context.params;
 
   const headersMap = await headers();
   const requestingUrl = headersMap.get("referer") || headersMap.get("origin");

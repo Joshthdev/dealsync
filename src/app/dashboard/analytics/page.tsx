@@ -27,7 +27,7 @@ import { TimezoneDropdownMenuItem } from "../_components/TimezoneDropdownMenuIte
 export default async function AnalyticsPage({
 	searchParams,
 }: {
-	searchParams?: { [key: string]: string | undefined };
+	searchParams: Record<string, string | undefined>;
 }) {
 	// ✅ Ensure `searchParams` is always an object (avoid undefined errors)
 	const queryParams = searchParams ?? {};

@@ -24,12 +24,12 @@ import { createURL } from "@/lib/utils";
 import { getProduct, getProducts } from "@/server/db/products";
 import { TimezoneDropdownMenuItem } from "../_components/TimezoneDropdownMenuItem";
 
-export default async function AnalyticsPage({
-	searchParams,
-}: {
-	searchParams?: Record<string, string | undefined>;
-}) {
-	console.log("Search Params:", searchParams);
+export default async function AnalyticsPage(props: any) {
+	// Await searchParams because it's a Promise
+	const searchParams = await props?.searchParams;
+
+	console.log("Search Params:", searchParams); // Debugging step
+
 	const { userId, redirectToSignIn } = await auth();
 	if (userId == null) return redirectToSignIn();
 

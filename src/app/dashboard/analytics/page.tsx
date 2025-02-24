@@ -29,6 +29,7 @@ export default async function AnalyticsPage({
 }: {
 	searchParams?: Record<string, string | undefined>;
 }) {
+	console.log("Search Params:", searchParams);
 	const { userId, redirectToSignIn } = await auth();
 	if (userId == null) return redirectToSignIn();
 
@@ -55,9 +56,13 @@ export default async function AnalyticsPage({
 								{Object.entries(CHART_INTERVALS).map(([key, value]) => (
 									<DropdownMenuItem asChild key={key}>
 										<Link
-											href={createURL("/dashboard/analytics", searchParams as Record<string, string>, {
-												interval: key,
-											})}
+											href={createURL(
+												"/dashboard/analytics",
+												searchParams as Record<string, string>,
+												{
+													interval: key,
+												}
+											)}
 										>
 											{value.label}
 										</Link>
@@ -80,14 +85,20 @@ export default async function AnalyticsPage({
 							<DropdownMenuContent>
 								<DropdownMenuItem asChild>
 									<Link
-										href={createURL("/dashboard/analytics", searchParams as Record<string, string>, {
-											timezone: "UTC",
-										})}
+										href={createURL(
+											"/dashboard/analytics",
+											searchParams as Record<string, string>,
+											{
+												timezone: "UTC",
+											}
+										)}
 									>
 										UTC
 									</Link>
 								</DropdownMenuItem>
-								<TimezoneDropdownMenuItem searchParams={searchParams as Record<string, string>} />
+								<TimezoneDropdownMenuItem
+									searchParams={searchParams as Record<string, string>}
+								/>
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>

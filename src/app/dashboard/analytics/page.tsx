@@ -24,20 +24,37 @@ import { createURL } from "@/lib/utils";
 import { getProduct, getProducts } from "@/server/db/products";
 import { TimezoneDropdownMenuItem } from "../_components/TimezoneDropdownMenuItem";
 
-export default async function AnalyticsPage(props: any) {
-	// Await searchParams because it's a Promise
-	const searchParams = await props?.searchParams;
+export default async function AnalyticsPage({
+	// NOTE: Type params and searchParams as Promises.
+	params,
+	searchParams,
+}: {
+	params: Promise<{ productId: string }>;
+	searchParams: Promise<{
+		interval: "last7Days" | "last30Days" | "last365Days";
+		timezone: string; tab?: string 
+}>;
+}) {
+	// Await both params and searchParams so they're resolved before use.
+	const resolvedParams = await params;
+	const resolvedSearchParams = await searchParams;
 
-	console.log("Search Params:", searchParams); // Debugging step
+	// Now safely destructure their properties.
+	const { productId } = resolvedParams;
+	const { tab } = resolvedSearchParams;
 
+	// Example clerk auth usage (optional, depending on your logic)
 	const { userId, redirectToSignIn } = await auth();
 	if (userId == null) return redirectToSignIn();
 
+	// Below is just an example of how you might use these in your UI
+	// (You can adapt or remove the analytics code if not needed)
+
 	const interval =
-		CHART_INTERVALS[searchParams?.interval as keyof typeof CHART_INTERVALS] ??
-		CHART_INTERVALS.last7Days;
-	const timezone = searchParams?.timezone || "UTC";
-	const productId = searchParams?.productId;
+		CHART_INTERVALS[
+			resolvedSearchParams?.interval as keyof typeof CHART_INTERVALS
+		] ?? CHART_INTERVALS.last7Days;
+	const timezone = resolvedSearchParams?.timezone || "UTC";
 
 	return (
 		<>
@@ -58,7 +75,7 @@ export default async function AnalyticsPage(props: any) {
 										<Link
 											href={createURL(
 												"/dashboard/analytics",
-												searchParams as Record<string, string>,
+												searchParams as unknown as Record<string, string>,
 												{
 													interval: key,
 												}
@@ -73,7 +90,7 @@ export default async function AnalyticsPage(props: any) {
 						<ProductDropdown
 							userId={userId}
 							selectedProductId={productId}
-							searchParams={searchParams as Record<string, string>}
+							searchParams={searchParams as unknown as Record<string, string>}
 						/>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
@@ -87,7 +104,7 @@ export default async function AnalyticsPage(props: any) {
 									<Link
 										href={createURL(
 											"/dashboard/analytics",
-											searchParams as Record<string, string>,
+											searchParams as unknown as Record<string, string>,
 											{
 												timezone: "UTC",
 											}
@@ -97,7 +114,7 @@ export default async function AnalyticsPage(props: any) {
 									</Link>
 								</DropdownMenuItem>
 								<TimezoneDropdownMenuItem
-									searchParams={searchParams as Record<string, string>}
+									searchParams={searchParams as unknown as Record<string, string>}
 								/>
 							</DropdownMenuContent>
 						</DropdownMenu>

@@ -55,7 +55,7 @@ export default async function AnalyticsPage({
 								{Object.entries(CHART_INTERVALS).map(([key, value]) => (
 									<DropdownMenuItem asChild key={key}>
 										<Link
-											href={createURL("/dashboard/analytics", searchParams, {
+											href={createURL("/dashboard/analytics", searchParams as Record<string, string>, {
 												interval: key,
 											})}
 										>
@@ -68,7 +68,7 @@ export default async function AnalyticsPage({
 						<ProductDropdown
 							userId={userId}
 							selectedProductId={productId}
-							searchParams={searchParams}
+							searchParams={searchParams as Record<string, string>}
 						/>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
@@ -80,14 +80,14 @@ export default async function AnalyticsPage({
 							<DropdownMenuContent>
 								<DropdownMenuItem asChild>
 									<Link
-										href={createURL("/dashboard/analytics", searchParams, {
+										href={createURL("/dashboard/analytics", searchParams as Record<string, string>, {
 											timezone: "UTC",
 										})}
 									>
 										UTC
 									</Link>
 								</DropdownMenuItem>
-								<TimezoneDropdownMenuItem searchParams={searchParams} />
+								<TimezoneDropdownMenuItem searchParams={searchParams as Record<string, string>} />
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>

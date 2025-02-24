@@ -8,7 +8,7 @@ import {
 } from "@/server/db/productViews";
 import { canAccessAnalytics } from "@/server/permissions";
 import { auth } from "@clerk/nextjs/server";
-import { ChevronDownIcon, SearchCheck } from "lucide-react";
+import { ChevronDownIcon } from "lucide-react";
 import { ViewsByCountryChart } from "../_components/charts/ViewsByCountryChart";
 import { ViewsByPPPChart } from "../_components/charts/ViewsByPPPChart";
 import { ViewsByDayChart } from "../_components/charts/ViewsByDayChart";
@@ -21,40 +21,31 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { createURL } from "@/lib/utils";
-import { getProduct, getProducts } from "@/server/db/products";
+import { getProducts } from "@/server/db/products";
 import { TimezoneDropdownMenuItem } from "../_components/TimezoneDropdownMenuItem";
 
 export default async function AnalyticsPage({
-	// NOTE: Type params and searchParams as Promises.
 	params,
 	searchParams,
 }: {
-	params: Promise<{ productId: string }>;
-	searchParams: Promise<{
-		interval: "last7Days" | "last30Days" | "last365Days";
-		timezone: string; tab?: string 
-}>;
+	params: { productId: string };
+	searchParams: {
+		interval?: "last7Days" | "last30Days" | "last365Days";
+		timezone?: string;
+		tab?: string;
+	};
 }) {
-	// Await both params and searchParams so they're resolved before use.
-	const resolvedParams = await params;
-	const resolvedSearchParams = await searchParams;
+	const { productId } = params;
+	const { tab } = searchParams;
 
-	// Now safely destructure their properties.
-	const { productId } = resolvedParams;
-	const { tab } = resolvedSearchParams;
-
-	// Example clerk auth usage (optional, depending on your logic)
+	// Clerk authentication
 	const { userId, redirectToSignIn } = await auth();
-	if (userId == null) return redirectToSignIn();
-
-	// Below is just an example of how you might use these in your UI
-	// (You can adapt or remove the analytics code if not needed)
+	if (!userId) return redirectToSignIn();
 
 	const interval =
-		CHART_INTERVALS[
-			resolvedSearchParams?.interval as keyof typeof CHART_INTERVALS
-		] ?? CHART_INTERVALS.last7Days;
-	const timezone = resolvedSearchParams?.timezone || "UTC";
+		CHART_INTERVALS[searchParams?.interval as keyof typeof CHART_INTERVALS] ??
+		CHART_INTERVALS.last7Days;
+	const timezone = searchParams?.timezone || "UTC";
 
 	return (
 		<>
@@ -73,13 +64,9 @@ export default async function AnalyticsPage({
 								{Object.entries(CHART_INTERVALS).map(([key, value]) => (
 									<DropdownMenuItem asChild key={key}>
 										<Link
-											href={createURL(
-												"/dashboard/analytics",
-												searchParams as unknown as Record<string, string>,
-												{
-													interval: key,
-												}
-											)}
+											href={createURL("/dashboard/analytics", searchParams, {
+												interval: key,
+											})}
 										>
 											{value.label}
 										</Link>
@@ -90,7 +77,7 @@ export default async function AnalyticsPage({
 						<ProductDropdown
 							userId={userId}
 							selectedProductId={productId}
-							searchParams={searchParams as unknown as Record<string, string>}
+							searchParams={searchParams}
 						/>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
@@ -102,20 +89,14 @@ export default async function AnalyticsPage({
 							<DropdownMenuContent>
 								<DropdownMenuItem asChild>
 									<Link
-										href={createURL(
-											"/dashboard/analytics",
-											searchParams as unknown as Record<string, string>,
-											{
-												timezone: "UTC",
-											}
-										)}
+										href={createURL("/dashboard/analytics", searchParams, {
+											timezone: "UTC",
+										})}
 									>
 										UTC
 									</Link>
 								</DropdownMenuItem>
-								<TimezoneDropdownMenuItem
-									searchParams={searchParams as unknown as Record<string, string>}
-								/>
+								<TimezoneDropdownMenuItem searchParams={searchParams} />
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>
@@ -154,7 +135,7 @@ async function ProductDropdown({
 }: {
 	userId: string;
 	selectedProductId?: string;
-	searchParams: Record<string, string>;
+	searchParams: Partial<Record<string, string>>;
 }) {
 	const products = await getProducts(userId);
 
@@ -170,7 +151,7 @@ async function ProductDropdown({
 			<DropdownMenuContent>
 				<DropdownMenuItem asChild>
 					<Link
-						href={createURL("/dashboard/analytics", searchParams, {
+						href={createURL("/dashboard/analytics", searchParams as Record<string, string>, {
 							productId: undefined,
 						})}
 					>
@@ -180,8 +161,8 @@ async function ProductDropdown({
 				{products.map((product) => (
 					<DropdownMenuItem asChild key={product.id}>
 						<Link
-							href={createURL("/dashboard/analytics", searchParams, {
-								productId: product.id,
+							href={createURL("/dashboard/analytics", searchParams as Record<string, string>, {
+								productId: product.id.toString(),
 							})}
 						>
 							{product.name}

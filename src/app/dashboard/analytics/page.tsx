@@ -27,20 +27,16 @@ import { TimezoneDropdownMenuItem } from "../_components/TimezoneDropdownMenuIte
 export default async function AnalyticsPage({
 	searchParams,
 }: {
-	searchParams: {
-		interval?: string | undefined;
-		timezone?: string | undefined;
-		productId?: string | undefined;
-	};
+	searchParams?: Record<string, string | undefined>;
 }) {
 	const { userId, redirectToSignIn } = await auth();
 	if (userId == null) return redirectToSignIn();
 
 	const interval =
-		CHART_INTERVALS[searchParams.interval as keyof typeof CHART_INTERVALS] ??
+		CHART_INTERVALS[searchParams?.interval as keyof typeof CHART_INTERVALS] ??
 		CHART_INTERVALS.last7Days;
-	const timezone = searchParams.timezone || "UTC";
-	const productId = searchParams.productId;
+	const timezone = searchParams?.timezone || "UTC";
+	const productId = searchParams?.productId;
 
 	return (
 		<>

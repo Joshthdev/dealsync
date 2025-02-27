@@ -29,23 +29,30 @@ export default async function AnalyticsPage({
 	searchParams,
 }: {
 	params: { productId: string };
-	searchParams: {
+	searchParams: Promise<{
 		interval?: "last7Days" | "last30Days" | "last365Days";
 		timezone?: string;
 		tab?: string;
-	};
+	}>;
 }) {
 	const { productId } = params;
-	const { tab } = searchParams;
+
+	// Await searchParams
+	const resolvedSearchParams = await searchParams;
+	const {
+		tab,
+		interval: rawInterval,
+		timezone: rawTimezone,
+	} = resolvedSearchParams;
 
 	// Clerk authentication
 	const { userId, redirectToSignIn } = await auth();
 	if (!userId) return redirectToSignIn();
 
 	const interval =
-		CHART_INTERVALS[searchParams?.interval as keyof typeof CHART_INTERVALS] ??
+		CHART_INTERVALS[rawInterval as keyof typeof CHART_INTERVALS] ??
 		CHART_INTERVALS.last7Days;
-	const timezone = searchParams?.timezone || "UTC";
+	const timezone = rawTimezone || "UTC";
 
 	return (
 		<>
@@ -61,10 +68,10 @@ export default async function AnalyticsPage({
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
-								{Object.entries(CHART_INTERVALS).map(([key, value]) => (
+								{Object.entries(CHART_INTERVALS).map(async ([key, value]) => (
 									<DropdownMenuItem asChild key={key}>
 										<Link
-											href={createURL("/dashboard/analytics", searchParams, {
+											href={createURL("/dashboard/analytics", await searchParams, {
 												interval: key,
 											})}
 										>
@@ -77,7 +84,7 @@ export default async function AnalyticsPage({
 						<ProductDropdown
 							userId={userId}
 							selectedProductId={productId}
-							searchParams={searchParams}
+							searchParams={resolvedSearchParams}
 						/>
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
@@ -89,14 +96,14 @@ export default async function AnalyticsPage({
 							<DropdownMenuContent>
 								<DropdownMenuItem asChild>
 									<Link
-										href={createURL("/dashboard/analytics", searchParams, {
+										href={createURL("/dashboard/analytics", await searchParams, {
 											timezone: "UTC",
 										})}
 									>
 										UTC
 									</Link>
 								</DropdownMenuItem>
-								<TimezoneDropdownMenuItem searchParams={searchParams} />
+								<TimezoneDropdownMenuItem searchParams={await searchParams} />
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>

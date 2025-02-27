@@ -29,13 +29,9 @@ export default async function AnalyticsPage({
 	searchParams,
 }: {
 	params: { productId: string };
-	searchParams: Promise<{
-		interval?: "last7Days" | "last30Days" | "last365Days";
-		timezone?: string;
-		tab?: string;
-	}>;
+	searchParams: Record<string, string | undefined>;
 }) {
-	const { productId } = params;
+	const { productId } = await params;
 
 	// Await searchParams
 	const resolvedSearchParams = await searchParams;
@@ -71,9 +67,13 @@ export default async function AnalyticsPage({
 								{Object.entries(CHART_INTERVALS).map(async ([key, value]) => (
 									<DropdownMenuItem asChild key={key}>
 										<Link
-											href={createURL("/dashboard/analytics", await searchParams, {
-												interval: key,
-											})}
+											href={createURL(
+												"/dashboard/analytics",
+												searchParams as Record<string, string>,
+												{
+													interval: key,
+												}
+											)}
 										>
 											{value.label}
 										</Link>
@@ -96,14 +96,18 @@ export default async function AnalyticsPage({
 							<DropdownMenuContent>
 								<DropdownMenuItem asChild>
 									<Link
-										href={createURL("/dashboard/analytics", await searchParams, {
-											timezone: "UTC",
-										})}
+										href={createURL(
+											"/dashboard/analytics",
+											searchParams as Record<string, string>,
+											{
+												timezone: "UTC",
+											}
+										)}
 									>
 										UTC
 									</Link>
 								</DropdownMenuItem>
-								<TimezoneDropdownMenuItem searchParams={await searchParams} />
+								<TimezoneDropdownMenuItem searchParams={searchParams as Record<string, string>} />
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>

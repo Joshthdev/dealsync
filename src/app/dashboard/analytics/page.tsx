@@ -8,7 +8,7 @@ import {
 } from "@/server/db/productViews";
 import { canAccessAnalytics } from "@/server/permissions";
 import { auth } from "@clerk/nextjs/server";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, SearchCheck } from "lucide-react";
 import { ViewsByCountryChart } from "../_components/charts/ViewsByCountryChart";
 import { ViewsByPPPChart } from "../_components/charts/ViewsByPPPChart";
 import { ViewsByDayChart } from "../_components/charts/ViewsByDayChart";
@@ -21,34 +21,28 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { createURL } from "@/lib/utils";
-import { getProducts } from "@/server/db/products";
+import { getProduct, getProducts } from "@/server/db/products";
 import { TimezoneDropdownMenuItem } from "../_components/TimezoneDropdownMenuItem";
 
 export default async function AnalyticsPage({
-	params,
 	searchParams,
 }: {
-	params: { productId: string };
-	searchParams: Record<string, string | undefined>;
+	searchParams: {
+		interval?: string;
+		timezone?: string;
+		productId?: string;
+	};
 }) {
-	const { productId } = await params;
-
-	// Await searchParams
-	const resolvedSearchParams = await searchParams;
-	const {
-		tab,
-		interval: rawInterval,
-		timezone: rawTimezone,
-	} = resolvedSearchParams;
-
-	// Clerk authentication
 	const { userId, redirectToSignIn } = await auth();
-	if (!userId) return redirectToSignIn();
+	if (userId == null) return redirectToSignIn();
+
+	const resolvedSearchParams = await searchParams;
 
 	const interval =
-		CHART_INTERVALS[rawInterval as keyof typeof CHART_INTERVALS] ??
+		CHART_INTERVALS[resolvedSearchParams.interval as keyof typeof CHART_INTERVALS] ??
 		CHART_INTERVALS.last7Days;
-	const timezone = rawTimezone || "UTC";
+	const timezone = resolvedSearchParams.timezone || "UTC";
+	const productId = resolvedSearchParams.productId;
 
 	return (
 		<>
@@ -64,16 +58,12 @@ export default async function AnalyticsPage({
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
-								{Object.entries(CHART_INTERVALS).map(async ([key, value]) => (
+								{Object.entries(CHART_INTERVALS).map(([key, value]) => (
 									<DropdownMenuItem asChild key={key}>
 										<Link
-											href={createURL(
-												"/dashboard/analytics",
-												searchParams as Record<string, string>,
-												{
-													interval: key,
-												}
-											)}
+											href={createURL("/dashboard/analytics", resolvedSearchParams, {
+												interval: key,
+											})}
 										>
 											{value.label}
 										</Link>
@@ -96,18 +86,14 @@ export default async function AnalyticsPage({
 							<DropdownMenuContent>
 								<DropdownMenuItem asChild>
 									<Link
-										href={createURL(
-											"/dashboard/analytics",
-											searchParams as Record<string, string>,
-											{
-												timezone: "UTC",
-											}
-										)}
+										href={createURL("/dashboard/analytics", resolvedSearchParams, {
+											timezone: "UTC",
+										})}
 									>
 										UTC
 									</Link>
 								</DropdownMenuItem>
-								<TimezoneDropdownMenuItem searchParams={searchParams as Record<string, string>} />
+								<TimezoneDropdownMenuItem searchParams={resolvedSearchParams} />
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>
@@ -146,7 +132,7 @@ async function ProductDropdown({
 }: {
 	userId: string;
 	selectedProductId?: string;
-	searchParams: Partial<Record<string, string>>;
+	searchParams: Record<string, string>;
 }) {
 	const products = await getProducts(userId);
 
@@ -162,7 +148,7 @@ async function ProductDropdown({
 			<DropdownMenuContent>
 				<DropdownMenuItem asChild>
 					<Link
-						href={createURL("/dashboard/analytics", searchParams as Record<string, string>, {
+						href={createURL("/dashboard/analytics", searchParams, {
 							productId: undefined,
 						})}
 					>
@@ -172,8 +158,8 @@ async function ProductDropdown({
 				{products.map((product) => (
 					<DropdownMenuItem asChild key={product.id}>
 						<Link
-							href={createURL("/dashboard/analytics", searchParams as Record<string, string>, {
-								productId: product.id.toString(),
+							href={createURL("/dashboard/analytics", searchParams, {
+								productId: product.id,
 							})}
 						>
 							{product.name}
